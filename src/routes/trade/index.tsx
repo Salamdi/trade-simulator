@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 import { CandlestickChart, type Kline } from '#/components/CandlestickChart'
+import { cn } from '#/lib/utils'
 
 export const Route = createFileRoute('/trade/')({
   component: RouteComponent,
@@ -187,7 +188,12 @@ function RouteComponent() {
         </div>
         </div>
         {(lastBuyPrice !== null || lastSellPrice !== null) && (
-          <div className="flex items-center gap-4 px-4 py-1.5 border-b border-[var(--line)] text-xs text-[var(--sea-ink-soft)]">
+          <div className={cn(
+            "flex items-center gap-4 px-4 py-1.5 border-b border-[var(--line)] text-xs",
+            lastSellPrice !== null && lastBuyPrice !== null
+              ? lastSellPrice - lastBuyPrice > 0 ? "text-green-500" : "text-red-500"
+              : "text-[var(--sea-ink-soft)]"
+          )}>
             {lastBuyPrice !== null && (
               <span>
                 Bought <span className="tabular-nums font-medium text-[var(--sea-ink)]">{fmt2(lastBuyPrice)}</span>
