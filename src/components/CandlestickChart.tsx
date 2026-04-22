@@ -1,13 +1,25 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   createChart,
   CandlestickSeries,
   ColorType,
   type Time,
   type ISeriesApi,
+  type MouseEventParams,
+  type CandlestickData,
 } from 'lightweight-charts'
+import { Card, CardContent } from '#/components/ui/card'
 
 export type Kline = [number, string, string, string, string, string]
+
+type HoveredCandle = {
+  open: number
+  high: number
+  low: number
+  close: number
+  volume: string
+  time: number
+}
 
 function toChartData(klines: Kline[]) {
   return klines.map(([ts, open, high, low, close]) => ({
@@ -19,9 +31,17 @@ function toChartData(klines: Kline[]) {
   }))
 }
 
+function fmt(n: number) {
+  return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
+
 export function CandlestickChart({ klines }: { klines: Kline[] }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const seriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null)
+  const klinesRef = useRef(klines)
+  const [hovered, setHovered] = useState<HoveredCandle | null>(null)
+
+  klinesRef.current = klines
 
   // Create chart once on mount
   useEffect(() => {
@@ -59,6 +79,28 @@ export function CandlestickChart({ klines }: { klines: Kline[] }) {
       wickDownColor: '#e05c5c',
     })
 
+    chart.subscribeCrosshairMove((param: MouseEventParams<Time>) => {
+      if (!param.time || !seriesRef.current) {
+        setHovered(null)
+        return
+      }
+      const candle = param.seriesData.get(seriesRef.current) as CandlestickData | undefined
+      if (!candle) {
+        setHovered(null)
+        return
+      }
+      const ts = (param.time as number) * 1000
+      const kline = klinesRef.current.find((k) => k[0] === ts)
+      setHovered({
+        open: candle.open,
+        high: candle.high,
+        low: candle.low,
+        close: candle.close,
+        volume: kline ? kline[5] : '0',
+        time: ts,
+      })
+    })
+
     const observer = new ResizeObserver(() => {
       if (containerRef.current) {
         chart.resize(
@@ -82,5 +124,32 @@ export function CandlestickChart({ klines }: { klines: Kline[] }) {
     seriesRef.current.setData(toChartData(klines))
   }, [klines])
 
-  return <div ref={containerRef} className="w-full h-full" />
+  const isUp = hovered ? hovered.close >= hovered.open : true
+
+  return (
+    <div ref={containerRef} className="relative w-full h-full">
+      {hovered && (
+        <Card className="absolute top-3 left-3 z-10 bg-[#0d1e24]/90 border-[var(--line)] backdrop-blur-sm shadow-lg pointer-events-none">
+          <CardContent className="px-3 py-2">
+            <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-xs">
+              <span className="text-[var(--sea-ink-soft)]">O</span>
+              <span className="tabular-nums text-[var(--sea-ink-soft)]">{fmt(hovered.open)}</span>
+              <span className="text-[var(--sea-ink-soft)]">H</span>
+              <span className="tabular-nums text-[#4fb8b2]">{fmt(hovered.high)}</span>
+              <span className="text-[var(--sea-ink-soft)]">L</span>
+              <span className="tabular-nums text-[#e05c5c]">{fmt(hovered.low)}</span>
+              <span className="text-[var(--sea-ink-soft)]">C</span>
+              <span className={`tabular-nums font-medium ${isUp ? 'text-[#4fb8b2]' : 'text-[#e05c5c]'}`}>
+                {fmt(hovered.close)}
+              </span>
+              <span className="text-[var(--sea-ink-soft)]">V</span>
+              <span className="tabular-nums text-[var(--sea-ink-soft)]">
+                {parseFloat(hovered.volume).toLocaleString('en-US', { maximumFractionDigits: 3 })}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  )
 }
