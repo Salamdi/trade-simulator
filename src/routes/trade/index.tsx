@@ -25,6 +25,8 @@ async function fetchKlines(startTime?: number): Promise<Kline[]> {
 function RouteComponent() {
   const [klines, setKlines] = useState<Kline[]>([])
   const [forwarding, setForwarding] = useState(false)
+  const [usdt, setUsdt] = useState(10_000)
+  const [btc, setBtc] = useState(0)
 
   const { data, isPending, isError, error } = useQuery({
     queryKey: ['uiKlines', 'BTCUSDT', '15m'],
@@ -39,6 +41,13 @@ function RouteComponent() {
   useEffect(() => {
     if (data) setKlines(data)
   }, [data])
+
+  function buy() {
+    if (usdt <= 0 || !klines.length) return
+    const price = parseFloat(klines[klines.length - 1][4])
+    setBtc((prev) => prev + usdt / price)
+    setUsdt(0)
+  }
 
   async function loadForward() {
     if (!klines.length) return
@@ -73,14 +82,38 @@ function RouteComponent() {
       <div className="flex-1 min-h-0">
         <CandlestickChart klines={klines} />
       </div>
-      <div className="shrink-0 flex items-center justify-center px-4 py-3 border-t border-[var(--line)] bg-[var(--header-bg)] backdrop-blur-sm">
-        <button
-          onClick={loadForward}
-          disabled={forwarding}
-          className="flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium bg-[var(--lagoon)] text-white hover:bg-[var(--lagoon-deep)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          {forwarding ? 'Loading…' : 'Forward 3h →'}
-        </button>
+      <div className="shrink-0 flex items-center justify-between px-4 py-3 border-t border-[var(--line)] bg-[var(--header-bg)] backdrop-blur-sm">
+        <div className="flex items-center gap-4 text-sm">
+          <span className="text-[var(--sea-ink-soft)]">
+            USDT{' '}
+            <span className="font-medium text-[var(--sea-ink)] tabular-nums">
+              {usdt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </span>
+          </span>
+          <span className="text-[var(--line)]">|</span>
+          <span className="text-[var(--sea-ink-soft)]">
+            BTC{' '}
+            <span className="font-medium text-[var(--sea-ink)] tabular-nums">
+              {btc.toLocaleString('en-US', { minimumFractionDigits: 6, maximumFractionDigits: 6 })}
+            </span>
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={buy}
+            disabled={usdt <= 0 || !klines.length}
+            className="px-5 py-2 rounded-lg text-sm font-medium bg-[#4fb8b2] text-white hover:bg-[var(--lagoon-deep)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            Buy BTC
+          </button>
+          <button
+            onClick={loadForward}
+            disabled={forwarding}
+            className="px-5 py-2 rounded-lg text-sm font-medium bg-[var(--surface)] border border-[var(--line)] text-[var(--sea-ink)] hover:bg-[var(--surface-strong)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {forwarding ? 'Loading…' : 'Forward 3h →'}
+          </button>
+        </div>
       </div>
     </div>
   )
