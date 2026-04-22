@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="6" fill="#0a1418"/>
+  <!-- candle 1: bearish -->
+  <line x1="8" y1="8" x2="8" y2="26" stroke="#e05c5c" stroke-width="1.5" stroke-linecap="round"/>
+  <rect x="5" y="14" width="6" height="8" rx="0.5" fill="#e05c5c"/>
+  <!-- candle 2: bullish tall -->
+  <line x1="16" y1="5" x2="16" y2="27" stroke="#4fb8b2" stroke-width="1.5" stroke-linecap="round"/>
+  <rect x="13" y="8" width="6" height="14" rx="0.5" fill="#4fb8b2"/>
+  <!-- candle 3: bullish -->
+  <line x1="24" y1="9" x2="24" y2="25" stroke="#4fb8b2" stroke-width="1.5" stroke-linecap="round"/>
+  <rect x="21" y="12" width="6" height="9" rx="0.5" fill="#4fb8b2"/>
+</svg>
