@@ -1,7 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
-import { CandlestickChart, type Kline } from '#/components/CandlestickChart'
+import { CandlestickChart } from '#/components/CandlestickChart'
+import { getKlines, type Kline } from '#/server/binance'
 import { cn } from '#/lib/utils'
 
 export const Route = createFileRoute('/trade/')({
@@ -22,17 +23,12 @@ const FORWARD_OPTIONS = [
   { label: '24h', candles: 96 },
 ]
 
-async function fetchKlines(startTime?: number, limit = 12): Promise<Kline[]> {
-  const params = new URLSearchParams({
-    symbol: 'BTCUSDT',
-    interval: '15m',
-    ...(startTime
-      ? { startTime: String(startTime), limit: String(limit) }
-      : { endTime: '1640995200000', limit: '1000' }),
+function fetchKlines(startTime?: number, limit = 12) {
+  return getKlines({
+    data: startTime
+      ? { startTime, limit }
+      : { endTime: 1640995200000, limit: 1000 },
   })
-  const res = await fetch(`/api/v3/uiKlines?${params}`)
-  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
-  return res.json()
 }
 
 function fmt2(n: number) {
