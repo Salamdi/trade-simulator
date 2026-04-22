@@ -1,11 +1,29 @@
 import { useEffect, useRef } from 'react'
-import { createChart, CandlestickSeries, ColorType, type Time } from 'lightweight-charts'
+import {
+  createChart,
+  CandlestickSeries,
+  ColorType,
+  type Time,
+  type ISeriesApi,
+} from 'lightweight-charts'
 
-type Kline = [number, string, string, string, string, string]
+export type Kline = [number, string, string, string, string, string]
+
+function toChartData(klines: Kline[]) {
+  return klines.map(([ts, open, high, low, close]) => ({
+    time: (ts / 1000) as Time,
+    open: parseFloat(open),
+    high: parseFloat(high),
+    low: parseFloat(low),
+    close: parseFloat(close),
+  }))
+}
 
 export function CandlestickChart({ klines }: { klines: Kline[] }) {
   const containerRef = useRef<HTMLDivElement>(null)
+  const seriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null)
 
+  // Create chart once on mount
   useEffect(() => {
     if (!containerRef.current) return
 
@@ -32,7 +50,7 @@ export function CandlestickChart({ klines }: { klines: Kline[] }) {
       height: containerRef.current.clientHeight,
     })
 
-    const series = chart.addSeries(CandlestickSeries, {
+    seriesRef.current = chart.addSeries(CandlestickSeries, {
       upColor: '#4fb8b2',
       downColor: '#e05c5c',
       borderUpColor: '#4fb8b2',
@@ -40,18 +58,6 @@ export function CandlestickChart({ klines }: { klines: Kline[] }) {
       wickUpColor: '#4fb8b2',
       wickDownColor: '#e05c5c',
     })
-
-    series.setData(
-      klines.map(([ts, open, high, low, close]) => ({
-        time: (ts / 1000) as Time,
-        open: parseFloat(open),
-        high: parseFloat(high),
-        low: parseFloat(low),
-        close: parseFloat(close),
-      })),
-    )
-
-    chart.timeScale().fitContent()
 
     const observer = new ResizeObserver(() => {
       if (containerRef.current) {
@@ -66,7 +72,14 @@ export function CandlestickChart({ klines }: { klines: Kline[] }) {
     return () => {
       observer.disconnect()
       chart.remove()
+      seriesRef.current = null
     }
+  }, [])
+
+  // Update data whenever klines change
+  useEffect(() => {
+    if (!seriesRef.current || !klines.length) return
+    seriesRef.current.setData(toChartData(klines))
   }, [klines])
 
   return <div ref={containerRef} className="w-full h-full" />
