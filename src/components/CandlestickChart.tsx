@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import {
   createChart,
   CandlestickSeries,
+  LineSeries,
   ColorType,
   type Time,
   type ISeriesApi,
@@ -19,7 +20,10 @@ type HoveredCandle = {
   close: number
   volume: string
   time: number
+  ema20: number | undefined
+  ema50: number | undefined
 }
+
 
 function toChartData(klines: Kline[]) {
   return klines.map(([ts, open, high, low, close]) => ({
@@ -31,6 +35,23 @@ function toChartData(klines: Kline[]) {
   }))
 }
 
+function calcEMA(klines: Kline[], period: number) {
+  const k = 2 / (period + 1)
+  const result: { time: Time; value: number }[] = []
+  let ema = 0
+  for (let i = 0; i < klines.length; i++) {
+    const close = parseFloat(klines[i][4])
+    if (i < period - 1) continue
+    if (i === period - 1) {
+      ema = klines.slice(0, period).reduce((sum, c) => sum + parseFloat(c[4]), 0) / period
+    } else {
+      ema = close * k + ema * (1 - k)
+    }
+    result.push({ time: (klines[i][0] / 1000) as Time, value: ema })
+  }
+  return result
+}
+
 function fmt(n: number) {
   return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
@@ -38,6 +59,8 @@ function fmt(n: number) {
 export function CandlestickChart({ klines }: { klines: Kline[] }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const seriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null)
+  const ema20Ref = useRef<ISeriesApi<'Line'> | null>(null)
+  const ema50Ref = useRef<ISeriesApi<'Line'> | null>(null)
   const klinesRef = useRef(klines)
   const [hovered, setHovered] = useState<HoveredCandle | null>(null)
 
@@ -82,6 +105,22 @@ export function CandlestickChart({ klines }: { klines: Kline[] }) {
       height: containerRef.current.clientHeight,
     })
 
+    ema20Ref.current = chart.addSeries(LineSeries, {
+      color: '#e8c84a',
+      lineWidth: 1,
+      priceLineVisible: false,
+      lastValueVisible: false,
+      crosshairMarkerVisible: false,
+    })
+
+    ema50Ref.current = chart.addSeries(LineSeries, {
+      color: '#7b9cf5',
+      lineWidth: 1,
+      priceLineVisible: false,
+      lastValueVisible: false,
+      crosshairMarkerVisible: false,
+    })
+
     seriesRef.current = chart.addSeries(CandlestickSeries, {
       upColor: '#4fb8b2',
       downColor: '#e05c5c',
@@ -103,6 +142,8 @@ export function CandlestickChart({ klines }: { klines: Kline[] }) {
       }
       const ts = (param.time as number) * 1000
       const kline = klinesRef.current.find((k) => k[0] === ts)
+      const ema20Val = (param.seriesData.get(ema20Ref.current!) as { value: number } | undefined)?.value
+      const ema50Val = (param.seriesData.get(ema50Ref.current!) as { value: number } | undefined)?.value
       setHovered({
         open: candle.open,
         high: candle.high,
@@ -110,6 +151,8 @@ export function CandlestickChart({ klines }: { klines: Kline[] }) {
         close: candle.close,
         volume: kline ? kline[5] : '0',
         time: ts,
+        ema20: ema20Val,
+        ema50: ema50Val,
       })
     })
 
@@ -127,6 +170,8 @@ export function CandlestickChart({ klines }: { klines: Kline[] }) {
       observer.disconnect()
       chart.remove()
       seriesRef.current = null
+      ema20Ref.current = null
+      ema50Ref.current = null
     }
   }, [])
 
@@ -134,6 +179,8 @@ export function CandlestickChart({ klines }: { klines: Kline[] }) {
   useEffect(() => {
     if (!seriesRef.current || !klines.length) return
     seriesRef.current.setData(toChartData(klines))
+    ema20Ref.current?.setData(calcEMA(klines, 20))
+    ema50Ref.current?.setData(calcEMA(klines, 50))
   }, [klines])
 
   const isUp = hovered ? hovered.close >= hovered.open : true
@@ -158,6 +205,21 @@ export function CandlestickChart({ klines }: { klines: Kline[] }) {
               <span className="tabular-nums text-[var(--sea-ink-soft)]">
                 {parseFloat(hovered.volume).toLocaleString('en-US', { maximumFractionDigits: 3 })}
               </span>
+              {(hovered.ema20 !== undefined || hovered.ema50 !== undefined) && (
+                <span className="col-span-2 border-t border-[var(--line)] my-1" />
+              )}
+              {hovered.ema20 !== undefined && (
+                <>
+                  <span className="font-medium" style={{ color: '#e8c84a' }}>EMA 20</span>
+                  <span className="tabular-nums" style={{ color: '#e8c84a' }}>{fmt(hovered.ema20)}</span>
+                </>
+              )}
+              {hovered.ema50 !== undefined && (
+                <>
+                  <span className="font-medium" style={{ color: '#7b9cf5' }}>EMA 50</span>
+                  <span className="tabular-nums" style={{ color: '#7b9cf5' }}>{fmt(hovered.ema50)}</span>
+                </>
+              )}
             </div>
           </CardContent>
         </Card>
