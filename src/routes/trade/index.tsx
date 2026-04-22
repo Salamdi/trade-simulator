@@ -9,8 +9,8 @@ export const Route = createFileRoute('/trade/')({
 })
 
 const INTERVAL_MS = 15 * 60 * 1000
-const TP_PCT = 0.01
-const SL_PCT = 0.02
+const DEFAULT_TP_PCT = 0.005
+const DEFAULT_SL_PCT = 0.1
 const FEE = 0.001
 
 const FORWARD_OPTIONS = [
@@ -49,6 +49,8 @@ function RouteComponent() {
   const [lastBuyPrice, setLastBuyPrice] = useState<number | null>(null)
   const [lastSellPrice, setLastSellPrice] = useState<number | null>(null)
   const [forwardCandles, setForwardCandles] = useState(12)
+  const [tpPct, setTpPct] = useState(DEFAULT_TP_PCT)
+  const [slPct, setSlPct] = useState(DEFAULT_SL_PCT)
 
   // Refs so the async loadForward always reads latest values
   const btcRef = useRef(btc)
@@ -80,8 +82,8 @@ function RouteComponent() {
     setUsdt(0)
     setLastBuyPrice(price)
     setLastSellPrice(null)
-    setTakeProfit(price * (1 + TP_PCT))
-    setStopLoss(price * (1 - SL_PCT))
+    setTakeProfit(price * (1 + tpPct))
+    setStopLoss(price * (1 - slPct))
   }
 
   async function loadForward() {
@@ -181,6 +183,38 @@ function RouteComponent() {
           )}
         </div>
         <div className="flex items-center gap-2">
+          <label className="flex items-center gap-1.5 text-xs text-[#4fb8b2]">
+            TP
+            <div className="relative">
+              <input
+                type="number"
+                min="0.1"
+                max="100"
+                step="0.1"
+                value={+(tpPct * 100).toFixed(2)}
+                onChange={(e) => setTpPct(parseFloat(e.target.value) / 100)}
+                disabled={btc > 0}
+                className="w-16 px-2 py-1 pr-5 rounded-md border border-[var(--line)] bg-[var(--surface)] text-[var(--sea-ink)] tabular-nums text-xs text-right focus:outline-none focus:ring-1 focus:ring-[#4fb8b2] disabled:opacity-40"
+              />
+              <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[var(--sea-ink-soft)] text-xs pointer-events-none">%</span>
+            </div>
+          </label>
+          <label className="flex items-center gap-1.5 text-xs text-[#e05c5c]">
+            SL
+            <div className="relative">
+              <input
+                type="number"
+                min="0.1"
+                max="100"
+                step="0.1"
+                value={+(slPct * 100).toFixed(2)}
+                onChange={(e) => setSlPct(parseFloat(e.target.value) / 100)}
+                disabled={btc > 0}
+                className="w-16 px-2 py-1 pr-5 rounded-md border border-[var(--line)] bg-[var(--surface)] text-[var(--sea-ink)] tabular-nums text-xs text-right focus:outline-none focus:ring-1 focus:ring-[#e05c5c] disabled:opacity-40"
+              />
+              <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[var(--sea-ink-soft)] text-xs pointer-events-none">%</span>
+            </div>
+          </label>
           <button
             onClick={buy}
             disabled={usdt <= 0 || !klines.length || btc > 0}
