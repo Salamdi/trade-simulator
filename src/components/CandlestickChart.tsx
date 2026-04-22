@@ -3,6 +3,7 @@ import {
   createChart,
   CandlestickSeries,
   LineSeries,
+  LineStyle,
   ColorType,
   type Time,
   type ISeriesApi,
@@ -22,6 +23,7 @@ type HoveredCandle = {
   time: number
   ema20: number | undefined
   ema50: number | undefined
+  rsi: number | undefined
 }
 
 
@@ -52,6 +54,43 @@ function calcEMA(klines: Kline[], period: number) {
   return result
 }
 
+function calcRSI(klines: Kline[], period = 14) {
+  const result: { time: Time; value: number }[] = []
+  const closes = klines.map((k) => parseFloat(k[4]))
+  if (closes.length < period + 1) return result
+
+  let avgGain = 0
+  let avgLoss = 0
+  for (let i = 1; i <= period; i++) {
+    const d = closes[i] - closes[i - 1]
+    if (d > 0) avgGain += d
+    else avgLoss -= d
+  }
+  avgGain /= period
+  avgLoss /= period
+  result.push({
+    time: (klines[period][0] / 1000) as Time,
+    value: 100 - 100 / (1 + (avgLoss === 0 ? 100 : avgGain / avgLoss)),
+  })
+
+  for (let i = period + 1; i < closes.length; i++) {
+    const d = closes[i] - closes[i - 1]
+    avgGain = (avgGain * (period - 1) + (d > 0 ? d : 0)) / period
+    avgLoss = (avgLoss * (period - 1) + (d < 0 ? -d : 0)) / period
+    result.push({
+      time: (klines[i][0] / 1000) as Time,
+      value: 100 - 100 / (1 + (avgLoss === 0 ? 100 : avgGain / avgLoss)),
+    })
+  }
+  return result
+}
+
+function rsiColor(rsi: number) {
+  if (rsi >= 70) return '#e05c5c'
+  if (rsi <= 30) return '#4fb8b2'
+  return '#a78bfa'
+}
+
 function fmt(n: number) {
   return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
@@ -61,6 +100,7 @@ export function CandlestickChart({ klines }: { klines: Kline[] }) {
   const seriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null)
   const ema20Ref = useRef<ISeriesApi<'Line'> | null>(null)
   const ema50Ref = useRef<ISeriesApi<'Line'> | null>(null)
+  const rsiRef = useRef<ISeriesApi<'Line'> | null>(null)
   const klinesRef = useRef(klines)
   const [hovered, setHovered] = useState<HoveredCandle | null>(null)
 
@@ -130,6 +170,17 @@ export function CandlestickChart({ klines }: { klines: Kline[] }) {
       wickDownColor: '#e05c5c',
     })
 
+    rsiRef.current = chart.addSeries(LineSeries, {
+      color: '#a78bfa',
+      lineWidth: 1,
+      priceLineVisible: false,
+      lastValueVisible: false,
+      crosshairMarkerVisible: false,
+    }, 1)
+    rsiRef.current.createPriceLine({ price: 70, color: 'rgba(224,92,92,0.5)',   lineWidth: 1, lineStyle: LineStyle.Dashed, axisLabelVisible: true,  title: '' })
+    rsiRef.current.createPriceLine({ price: 50, color: 'rgba(141,229,219,0.2)', lineWidth: 1, lineStyle: LineStyle.Dashed, axisLabelVisible: false, title: '' })
+    rsiRef.current.createPriceLine({ price: 30, color: 'rgba(79,184,178,0.5)',  lineWidth: 1, lineStyle: LineStyle.Dashed, axisLabelVisible: true,  title: '' })
+
     chart.subscribeCrosshairMove((param: MouseEventParams<Time>) => {
       if (!param.time || !seriesRef.current) {
         setHovered(null)
@@ -144,6 +195,7 @@ export function CandlestickChart({ klines }: { klines: Kline[] }) {
       const kline = klinesRef.current.find((k) => k[0] === ts)
       const ema20Val = (param.seriesData.get(ema20Ref.current!) as { value: number } | undefined)?.value
       const ema50Val = (param.seriesData.get(ema50Ref.current!) as { value: number } | undefined)?.value
+      const rsiVal   = (param.seriesData.get(rsiRef.current!)   as { value: number } | undefined)?.value
       setHovered({
         open: candle.open,
         high: candle.high,
@@ -153,6 +205,7 @@ export function CandlestickChart({ klines }: { klines: Kline[] }) {
         time: ts,
         ema20: ema20Val,
         ema50: ema50Val,
+        rsi: rsiVal,
       })
     })
 
@@ -172,6 +225,7 @@ export function CandlestickChart({ klines }: { klines: Kline[] }) {
       seriesRef.current = null
       ema20Ref.current = null
       ema50Ref.current = null
+      rsiRef.current = null
     }
   }, [])
 
@@ -181,6 +235,7 @@ export function CandlestickChart({ klines }: { klines: Kline[] }) {
     seriesRef.current.setData(toChartData(klines))
     ema20Ref.current?.setData(calcEMA(klines, 20))
     ema50Ref.current?.setData(calcEMA(klines, 50))
+    rsiRef.current?.setData(calcRSI(klines))
   }, [klines])
 
   const isUp = hovered ? hovered.close >= hovered.open : true
@@ -218,6 +273,13 @@ export function CandlestickChart({ klines }: { klines: Kline[] }) {
                 <>
                   <span className="font-medium" style={{ color: '#7b9cf5' }}>EMA 50</span>
                   <span className="tabular-nums" style={{ color: '#7b9cf5' }}>{fmt(hovered.ema50)}</span>
+                </>
+              )}
+              {hovered.rsi !== undefined && (
+                <>
+                  <span className="col-span-2 border-t border-[var(--line)] my-1" />
+                  <span className="font-medium" style={{ color: rsiColor(hovered.rsi) }}>RSI 14</span>
+                  <span className="tabular-nums" style={{ color: rsiColor(hovered.rsi) }}>{hovered.rsi.toFixed(2)}</span>
                 </>
               )}
             </div>
