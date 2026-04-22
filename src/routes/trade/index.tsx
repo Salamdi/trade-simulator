@@ -38,6 +38,11 @@ function RouteComponent() {
   const { data, isPending, isError, error } = useQuery({
     queryKey: ['uiKlines', 'BTCUSDT', '15m'],
     queryFn: fetchKlines,
+    staleTime: 0,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchInterval: false,
+    refetchOnReconnect: false,
   })
 
   if (isPending) {
