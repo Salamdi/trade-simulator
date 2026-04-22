@@ -1,213 +1,122 @@
-Welcome to your new TanStack Start app! 
+# TradeEmulate
 
-# Getting Started
+A historical trading simulator built with TanStack Start. Load a BTC/USDT candlestick chart from Binance, step forward through time candle by candle, place buy orders, and watch take-profit / stop-loss levels execute automatically as new candles arrive.
 
-To run this application:
+## What it does
 
-```bash
-npm install
-npm run dev
-```
+- Renders a full-screen BTC/USDT candlestick chart (15m interval) using [lightweight-charts](https://tradingview.github.io/lightweight-charts/)
+- Loads 1 000 candles of historical data ending at a fixed point in time — you start blind to what happens next
+- **Forward** button advances the chart by a configurable period (15 m → 24 h), revealing new candles one batch at a time
+- **Buy BTC** converts your entire USDT balance into BTC at the last close price
+- **Take profit** (configurable %) and **stop loss** (configurable %) are set automatically on buy and checked against each new candle's high/low as you step forward
+- A 0.1 % fee is deducted on every order (buy, TP fill, SL fill)
+- Hover any candle to see a tooltip with date, open, high, low, close, and volume
+- Binance API calls are proxied through a TanStack Start server function — no client-side CORS issues
 
-# Building For Production
-
-To build this application for production:
-
-```bash
-npm run build
-```
-
-## Testing
-
-This project uses [Vitest](https://vitest.dev/) for testing. You can run the tests with:
+## Getting started
 
 ```bash
-npm run test
+pnpm install
+pnpm dev
 ```
 
-## Styling
+Open [http://localhost:3000/trade](http://localhost:3000/trade).
 
-This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
+## How to use
 
-### Removing Tailwind CSS
+### Starting balances
 
-If you prefer not to use Tailwind CSS:
+You begin with **10 000 USDT** and **0 BTC**.
 
-1. Remove the demo pages in `src/routes/demo/`
-2. Replace the Tailwind import in `src/styles.css` with your own styles
-3. Remove `tailwindcss()` from the plugins array in `vite.config.ts`
-4. Uninstall the packages: `npm install @tailwindcss/vite tailwindcss -D`
+### Stepping through time
 
-## Linting & Formatting
+Click **Forward →** to load the next batch of candles. Use the period selector to control how many candles each click reveals:
 
+| Button | Candles revealed |
+|--------|-----------------|
+| 15m    | 1               |
+| 1h     | 4               |
+| 3h     | 12              |
+| 6h     | 24              |
+| 12h    | 48              |
+| 24h    | 96              |
 
-This project uses [eslint](https://eslint.org/) and [prettier](https://prettier.io/) for linting and formatting. Eslint is configured using [tanstack/eslint-config](https://tanstack.com/config/latest/docs/eslint). The following scripts are available:
+Scroll left on the chart at any time to review past candles.
+
+### Placing a trade
+
+1. Adjust **TP %** and **SL %** inputs to your desired levels (defaults: 0.5 % / 10 %).
+2. Click **Buy BTC** — your entire USDT balance converts to BTC at the current last close price minus a 0.1 % fee.
+3. TP and SL target prices appear in the toolbar.
+
+```
+Balance:  USDT 0.00  |  BTC 0.214831
+TP 47,234.50  |  SL 42,210.00
+```
+
+### Take profit & stop loss
+
+As you click **Forward →**, each new candle is checked in order:
+
+- If the candle's **low** touches or crosses the SL price → position closes at the SL price.
+- If the candle's **high** touches or crosses the TP price → position closes at the TP price.
+
+The first trigger wins. After a fill the USDT balance is updated (net of the 0.1 % fee) and both levels are cleared.
+
+The **Bought / Sold** line below the toolbar shows the last entry and exit prices. It turns **green** on a profitable close (TP) and **red** on a loss (SL).
+
+### Reading the OHLCV tooltip
+
+Hover any candle to see a floating card in the top-left corner of the chart:
+
+```
+Mon, Jan 03, 2022, 14:00
+O  46,412.50
+H  46,890.00   ← green
+L  46,100.25   ← red
+C  46,734.00   ← colored by direction
+V  1,204.873
+```
+
+## Project structure
+
+```
+src/
+├── components/
+│   ├── CandlestickChart.tsx   # lightweight-charts wrapper with OHLCV tooltip
+│   └── ui/                    # shadcn/ui components
+├── routes/
+│   └── trade/
+│       └── index.tsx          # main trading simulator page
+├── server/
+│   └── binance.ts             # server function proxying Binance API calls
+└── styles.css                 # global styles & CSS variables
+```
+
+## Tech stack
+
+| Concern | Library |
+|---------|---------|
+| Framework | [TanStack Start](https://tanstack.com/start) (SSR, server functions) |
+| Routing | [TanStack Router](https://tanstack.com/router) (file-based) |
+| Data fetching | [TanStack Query](https://tanstack.com/query) |
+| Chart | [lightweight-charts v5](https://tradingview.github.io/lightweight-charts/) |
+| Styling | [Tailwind CSS v4](https://tailwindcss.com/) + [shadcn/ui](https://ui.shadcn.com/) |
+| Deployment | [Cloudflare Workers](https://workers.cloudflare.com/) via Wrangler |
+
+## Scripts
 
 ```bash
-npm run lint
-npm run format
-npm run check
+pnpm dev          # start dev server on :3000
+pnpm build        # production build
+pnpm preview      # preview production build locally
+pnpm deploy       # build + deploy to Cloudflare Workers
+pnpm test         # run unit tests with Vitest
+pnpm check        # format + lint
 ```
 
-
-## Shadcn
-
-Add components using the latest version of [Shadcn](https://ui.shadcn.com/).
+## Adding shadcn/ui components
 
 ```bash
 pnpm dlx shadcn@latest add button
 ```
-
-
-
-## Routing
-
-This project uses [TanStack Router](https://tanstack.com/router) with file-based routing. Routes are managed as files in `src/routes`.
-
-### Adding A Route
-
-To add a new route to your application just add a new file in the `./src/routes` directory.
-
-TanStack will automatically generate the content of the route file for you.
-
-Now that you have two routes you can use a `Link` component to navigate between them.
-
-### Adding Links
-
-To use SPA (Single Page Application) navigation you will need to import the `Link` component from `@tanstack/react-router`.
-
-```tsx
-import { Link } from "@tanstack/react-router";
-```
-
-Then anywhere in your JSX you can use it like so:
-
-```tsx
-<Link to="/about">About</Link>
-```
-
-This will create a link that will navigate to the `/about` route.
-
-More information on the `Link` component can be found in the [Link documentation](https://tanstack.com/router/v1/docs/framework/react/api/router/linkComponent).
-
-### Using A Layout
-
-In the File Based Routing setup the layout is located in `src/routes/__root.tsx`. Anything you add to the root route will appear in all the routes. The route content will appear in the JSX where you render `{children}` in the `shellComponent`.
-
-Here is an example layout that includes a header:
-
-```tsx
-import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
-
-export const Route = createRootRoute({
-  head: () => ({
-    meta: [
-      { charSet: 'utf-8' },
-      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'My App' },
-    ],
-  }),
-  shellComponent: ({ children }) => (
-    <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        <header>
-          <nav>
-            <Link to="/">Home</Link>
-            <Link to="/about">About</Link>
-          </nav>
-        </header>
-        {children}
-        <Scripts />
-      </body>
-    </html>
-  ),
-})
-```
-
-More information on layouts can be found in the [Layouts documentation](https://tanstack.com/router/latest/docs/framework/react/guide/routing-concepts#layouts).
-
-## Server Functions
-
-TanStack Start provides server functions that allow you to write server-side code that seamlessly integrates with your client components.
-
-```tsx
-import { createServerFn } from '@tanstack/react-start'
-
-const getServerTime = createServerFn({
-  method: 'GET',
-}).handler(async () => {
-  return new Date().toISOString()
-})
-
-// Use in a component
-function MyComponent() {
-  const [time, setTime] = useState('')
-  
-  useEffect(() => {
-    getServerTime().then(setTime)
-  }, [])
-  
-  return <div>Server time: {time}</div>
-}
-```
-
-## API Routes
-
-You can create API routes by using the `server` property in your route definitions:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-import { json } from '@tanstack/react-start'
-
-export const Route = createFileRoute('/api/hello')({
-  server: {
-    handlers: {
-      GET: () => json({ message: 'Hello, World!' }),
-    },
-  },
-})
-```
-
-## Data Fetching
-
-There are multiple ways to fetch data in your application. You can use TanStack Query to fetch data from a server. But you can also use the `loader` functionality built into TanStack Router to load the data for a route before it's rendered.
-
-For example:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-
-export const Route = createFileRoute('/people')({
-  loader: async () => {
-    const response = await fetch('https://swapi.dev/api/people')
-    return response.json()
-  },
-  component: PeopleComponent,
-})
-
-function PeopleComponent() {
-  const data = Route.useLoaderData()
-  return (
-    <ul>
-      {data.results.map((person) => (
-        <li key={person.name}>{person.name}</li>
-      ))}
-    </ul>
-  )
-}
-```
-
-Loaders simplify your data fetching logic dramatically. Check out more information in the [Loader documentation](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters).
-
-# Demo files
-
-Files prefixed with `demo` can be safely deleted. They are there to provide a starting point for you to play around with the features you've installed.
-
-# Learn More
-
-You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
-
-For TanStack Start specific documentation, visit [TanStack Start](https://tanstack.com/start).
