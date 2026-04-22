@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { CandlestickChart, type Kline } from '#/components/CandlestickChart'
 
 export const Route = createFileRoute('/trade/')({
@@ -8,6 +8,8 @@ export const Route = createFileRoute('/trade/')({
 })
 
 const INTERVAL_MS = 15 * 60 * 1000
+const TP_PCT = 0.01
+const SL_PCT = 0.02
 
 async function fetchKlines(startTime?: number): Promise<Kline[]> {
   const params = new URLSearchParams({
@@ -22,11 +24,25 @@ async function fetchKlines(startTime?: number): Promise<Kline[]> {
   return res.json()
 }
 
+function fmt2(n: number) {
+  return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
+
 function RouteComponent() {
   const [klines, setKlines] = useState<Kline[]>([])
   const [forwarding, setForwarding] = useState(false)
   const [usdt, setUsdt] = useState(10_000)
   const [btc, setBtc] = useState(0)
+  const [takeProfit, setTakeProfit] = useState<number | null>(null)
+  const [stopLoss, setStopLoss] = useState<number | null>(null)
+
+  // Refs so the async loadForward always reads latest values
+  const btcRef = useRef(btc)
+  const tpRef = useRef(takeProfit)
+  const slRef = useRef(stopLoss)
+  btcRef.current = btc
+  tpRef.current = takeProfit
+  slRef.current = stopLoss
 
   const { data, isPending, isError, error } = useQuery({
     queryKey: ['uiKlines', 'BTCUSDT', '15m'],
@@ -45,8 +61,11 @@ function RouteComponent() {
   function buy() {
     if (usdt <= 0 || !klines.length) return
     const price = parseFloat(klines[klines.length - 1][4])
-    setBtc((prev) => prev + usdt / price)
+    const acquired = usdt / price
+    setBtc(acquired)
     setUsdt(0)
+    setTakeProfit(price * (1 + TP_PCT))
+    setStopLoss(price * (1 - SL_PCT))
   }
 
   async function loadForward() {
@@ -55,7 +74,35 @@ function RouteComponent() {
     setForwarding(true)
     try {
       const next = await fetchKlines(lastTs + INTERVAL_MS)
-      if (next.length) setKlines((prev) => [...prev, ...next])
+      if (!next.length) return
+
+      const tp = tpRef.current
+      const sl = slRef.current
+      const currentBtc = btcRef.current
+
+      if (tp !== null && sl !== null && currentBtc > 0) {
+        for (const candle of next) {
+          const high = parseFloat(candle[2])
+          const low = parseFloat(candle[3])
+
+          if (low <= sl) {
+            setUsdt(currentBtc * sl)
+            setBtc(0)
+            setTakeProfit(null)
+            setStopLoss(null)
+            break
+          }
+          if (high >= tp) {
+            setUsdt(currentBtc * tp)
+            setBtc(0)
+            setTakeProfit(null)
+            setStopLoss(null)
+            break
+          }
+        }
+      }
+
+      setKlines((prev) => [...prev, ...next])
     } finally {
       setForwarding(false)
     }
@@ -87,7 +134,7 @@ function RouteComponent() {
           <span className="text-[var(--sea-ink-soft)]">
             USDT{' '}
             <span className="font-medium text-[var(--sea-ink)] tabular-nums">
-              {usdt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {fmt2(usdt)}
             </span>
           </span>
           <span className="text-[var(--line)]">|</span>
@@ -97,11 +144,27 @@ function RouteComponent() {
               {btc.toLocaleString('en-US', { minimumFractionDigits: 6, maximumFractionDigits: 6 })}
             </span>
           </span>
+          {takeProfit !== null && (
+            <>
+              <span className="text-[var(--line)]">|</span>
+              <span className="text-[#4fb8b2] text-xs">
+                TP <span className="tabular-nums font-medium">{fmt2(takeProfit)}</span>
+              </span>
+            </>
+          )}
+          {stopLoss !== null && (
+            <>
+              <span className="text-[var(--line)]">|</span>
+              <span className="text-[#e05c5c] text-xs">
+                SL <span className="tabular-nums font-medium">{fmt2(stopLoss)}</span>
+              </span>
+            </>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={buy}
-            disabled={usdt <= 0 || !klines.length}
+            disabled={usdt <= 0 || !klines.length || btc > 0}
             className="px-5 py-2 rounded-lg text-sm font-medium bg-[#4fb8b2] text-white hover:bg-[var(--lagoon-deep)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             Buy BTC
