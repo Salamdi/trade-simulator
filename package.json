@@ -36,6 +36,7 @@
     "react-dom": "^19.2.0",
     "tailwind-merge": "^3.0.2",
     "tailwindcss": "^4.1.18",
+    "tradex-chart": "^0.158.7",
     "tw-animate-css": "^1.3.6",
     "zod": "^4.3.6"
   },
