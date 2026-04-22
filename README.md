@@ -43,15 +43,27 @@ Click **Forward →** to load the next batch of candles. Use the period selector
 
 Scroll left on the chart at any time to review past candles.
 
-### Placing a trade
+### Placing a market order
 
 1. Adjust **TP %** and **SL %** inputs to your desired levels (defaults: 0.5 % / 10 %).
-2. Click **Buy BTC** — your entire USDT balance converts to BTC at the current last close price minus a 0.1 % fee.
-3. TP and SL target prices appear in the toolbar.
+2. Optionally edit the **Price** input — it defaults to the last close but you can type any value.
+3. Click **Buy BTC** — your entire USDT balance converts to BTC at that price minus a 0.1 % fee.
+4. TP and SL target prices appear in the toolbar.
 
 ```
-Balance:  USDT 0.00  |  BTC 0.214831
-TP 47,234.50  |  SL 42,210.00
+USDT 0.00  |  BTC 0.214831  |  TP 47,234.50  |  SL 42,210.00
+```
+
+### Placing a limit order
+
+1. Set **Price** to the level where you want to buy.
+2. Adjust **TP %** and **SL %** as desired.
+3. Click **Buy BTC** — the order is queued as a pending limit order (shown in yellow in the toolbar).
+4. Click **Forward →** to advance time. As each new candle arrives, its **low** is checked: if `low ≤ limit price` the order fills at your limit price and TP/SL are set automatically.
+5. Click **Cancel** to remove the pending order before it fills.
+
+```
+USDT 10,000.00  |  BTC 0.000000  |  Limit 45,000.00
 ```
 
 ### Take profit & stop loss

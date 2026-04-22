@@ -61,7 +61,7 @@ function Home() {
           },
           {
             title: 'Automatic order fills',
-            body: 'Set a take-profit and stop-loss percentage before buying. As new candles appear, your position closes automatically when a level is hit.',
+            body: 'Place a market or limit buy order, then set take-profit and stop-loss percentages. As new candles appear, pending orders fill and positions close automatically.',
           },
         ].map(({ title, body }) => (
           <div key={title} className="island-shell feature-card rounded-2xl p-6 space-y-2 border border-[var(--line)]">
@@ -90,20 +90,30 @@ function Home() {
             Use the <strong className="text-[#4fb8b2]">TP %</strong> and{' '}
             <strong className="text-[#e05c5c]">SL %</strong> inputs in the toolbar
             to choose how much profit to target and how much loss to accept. These
-            are locked while a position is open.
+            are locked while a position or pending order is active.
           </Step>
-          <Step n={4} title="Buy BTC">
-            Click <strong>Buy BTC</strong>. Your entire USDT balance is converted
-            to BTC at the last candle's close price. A 0.1 % fee is deducted. Take-profit
-            and stop-loss prices are set immediately and shown in the toolbar.
+          <Step n={4} title="Choose a buy price">
+            The <strong>Price</strong> input defaults to the last candle's close.
+            Leave it as-is to buy at market, or type a lower price to place a{' '}
+            <strong>limit order</strong> — the order will only fill when a future
+            candle's low reaches that price. Click <strong>Cancel</strong> to remove
+            a pending limit order before it fills.
           </Step>
-          <Step n={5} title="Step forward">
+          <Step n={5} title="Buy BTC">
+            Click <strong>Buy BTC</strong>. If the price matches the last close the
+            position opens immediately. If you set a custom price the order queues
+            (shown in{' '}
+            <span className="text-yellow-500 font-medium">yellow</span> in the
+            toolbar) and fills automatically as you step forward. A 0.1 % fee is
+            deducted on fill.
+          </Step>
+          <Step n={6} title="Step forward">
             Select a forward period (15 m – 24 h) then click <strong>Forward →</strong>.
-            New candles appear on the right. Each candle is checked in order: if the
-            low hits your SL the position closes at a loss; if the high hits your TP
-            it closes at a profit. The first level reached wins.
+            New candles appear on the right. Each candle is checked in order: pending
+            limit fills first, then SL and TP. If the low hits your SL the position
+            closes at a loss; if the high hits your TP it closes at a profit.
           </Step>
-          <Step n={6} title="Review your trade">
+          <Step n={7} title="Review your trade">
             After a fill the toolbar shows your updated USDT balance alongside the
             entry (<strong>Bought</strong>) and exit (<strong>Sold</strong>) prices.
             The line is <span className="text-green-500 font-medium">green</span> for
