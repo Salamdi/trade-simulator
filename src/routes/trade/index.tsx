@@ -10,6 +10,7 @@ export const Route = createFileRoute('/trade/')({
 const INTERVAL_MS = 15 * 60 * 1000
 const TP_PCT = 0.01
 const SL_PCT = 0.02
+const FEE = 0.001
 
 async function fetchKlines(startTime?: number): Promise<Kline[]> {
   const params = new URLSearchParams({
@@ -61,7 +62,7 @@ function RouteComponent() {
   function buy() {
     if (usdt <= 0 || !klines.length) return
     const price = parseFloat(klines[klines.length - 1][4])
-    const acquired = usdt / price
+    const acquired = (usdt * (1 - FEE)) / price
     setBtc(acquired)
     setUsdt(0)
     setTakeProfit(price * (1 + TP_PCT))
@@ -86,14 +87,14 @@ function RouteComponent() {
           const low = parseFloat(candle[3])
 
           if (low <= sl) {
-            setUsdt(currentBtc * sl)
+            setUsdt(currentBtc * sl * (1 - FEE))
             setBtc(0)
             setTakeProfit(null)
             setStopLoss(null)
             break
           }
           if (high >= tp) {
-            setUsdt(currentBtc * tp)
+            setUsdt(currentBtc * tp * (1 - FEE))
             setBtc(0)
             setTakeProfit(null)
             setStopLoss(null)
