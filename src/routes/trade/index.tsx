@@ -195,154 +195,149 @@ function RouteComponent() {
         <CandlestickChart klines={klines} />
       </div>
       <div className="shrink-0 border-t border-[var(--line)] bg-[var(--header-bg)] backdrop-blur-sm">
-        <div className="flex items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-4 text-sm">
-            <span className="text-[var(--sea-ink-soft)]">
-              USDT{' '}
-              <span className="font-medium text-[var(--sea-ink)] tabular-nums">
-                {fmt2(usdt)}
-              </span>
+
+        {/* Balance + order info */}
+        <div className="flex items-center gap-3 flex-wrap px-4 pt-2.5 pb-1.5 text-xs">
+          <span className="text-[var(--sea-ink-soft)]">
+            USDT <span className="font-medium text-[var(--sea-ink)] tabular-nums">{fmt2(usdt)}</span>
+          </span>
+          <span className="text-[var(--line)]">|</span>
+          <span className="text-[var(--sea-ink-soft)]">
+            BTC <span className="font-medium text-[var(--sea-ink)] tabular-nums">
+              {btc.toLocaleString('en-US', { minimumFractionDigits: 6, maximumFractionDigits: 6 })}
             </span>
-            <span className="text-[var(--line)]">|</span>
-            <span className="text-[var(--sea-ink-soft)]">
-              BTC{' '}
-              <span className="font-medium text-[var(--sea-ink)] tabular-nums">
-                {btc.toLocaleString('en-US', { minimumFractionDigits: 6, maximumFractionDigits: 6 })}
+          </span>
+          {hasPendingOrder && (
+            <>
+              <span className="text-[var(--line)]">|</span>
+              <span className="text-yellow-500">
+                Limit <span className="tabular-nums font-medium">{fmt2(pendingLimit!)}</span>
               </span>
-            </span>
-            {hasPendingOrder && (
-              <>
-                <span className="text-[var(--line)]">|</span>
-                <span className="text-yellow-500 text-xs">
-                  Limit <span className="tabular-nums font-medium">{fmt2(pendingLimit!)}</span>
-                </span>
-              </>
-            )}
-            {takeProfit !== null && (
-              <>
-                <span className="text-[var(--line)]">|</span>
-                <span className="text-[#4fb8b2] text-xs">
-                  TP <span className="tabular-nums font-medium">{fmt2(takeProfit)}</span>
-                </span>
-              </>
-            )}
-            {stopLoss !== null && (
-              <>
-                <span className="text-[var(--line)]">|</span>
-                <span className="text-[#e05c5c] text-xs">
-                  SL <span className="tabular-nums font-medium">{fmt2(stopLoss)}</span>
-                </span>
-              </>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            <label className="flex items-center gap-1.5 text-xs text-[var(--sea-ink-soft)]">
-              Price
+            </>
+          )}
+          {takeProfit !== null && (
+            <>
+              <span className="text-[var(--line)]">|</span>
+              <span className="text-[#4fb8b2]">
+                TP <span className="tabular-nums font-medium">{fmt2(takeProfit)}</span>
+              </span>
+            </>
+          )}
+          {stopLoss !== null && (
+            <>
+              <span className="text-[var(--line)]">|</span>
+              <span className="text-[#e05c5c]">
+                SL <span className="tabular-nums font-medium">{fmt2(stopLoss)}</span>
+              </span>
+            </>
+          )}
+          {(lastBuyPrice !== null || lastSellPrice !== null) && (
+            <>
+              <span className="text-[var(--line)]">|</span>
+              <span className={cn(
+                lastSellPrice !== null && lastBuyPrice !== null
+                  ? lastSellPrice - lastBuyPrice > 0 ? 'text-green-500' : 'text-red-500'
+                  : 'text-[var(--sea-ink-soft)]',
+              )}>
+                {lastBuyPrice !== null && (
+                  <>Bought <span className="tabular-nums font-medium text-[var(--sea-ink)]">{fmt2(lastBuyPrice)}</span></>
+                )}
+                {lastBuyPrice !== null && lastSellPrice !== null && <span className="mx-1.5 text-[var(--line)]">|</span>}
+                {lastSellPrice !== null && (
+                  <>Sold <span className="tabular-nums font-medium text-[var(--sea-ink)]">{fmt2(lastSellPrice)}</span></>
+                )}
+              </span>
+            </>
+          )}
+        </div>
+
+        {/* Controls */}
+        <div className="flex items-center gap-2 flex-wrap px-4 pb-3 pt-1">
+          <label className="flex items-center gap-1.5 text-xs text-[var(--sea-ink-soft)]">
+            Price
+            <input
+              type="number"
+              min="0"
+              step="1"
+              value={buyPrice ?? ''}
+              onChange={(e) => setBuyPrice(parseFloat(e.target.value))}
+              disabled={hasPosition || hasPendingOrder}
+              className="w-24 px-2 py-1.5 rounded-md border border-[var(--line)] bg-[var(--surface)] text-[var(--sea-ink)] tabular-nums text-xs text-right focus:outline-none focus:ring-1 focus:ring-[var(--lagoon)] disabled:opacity-40"
+            />
+          </label>
+          <label className="flex items-center gap-1.5 text-xs text-[#4fb8b2]">
+            TP
+            <div className="relative">
               <input
                 type="number"
-                min="0"
-                step="1"
-                value={buyPrice ?? ''}
-                onChange={(e) => setBuyPrice(parseFloat(e.target.value))}
+                min="0.1"
+                max="100"
+                step="0.1"
+                value={+(tpPct * 100).toFixed(2)}
+                onChange={(e) => setTpPct(parseFloat(e.target.value) / 100)}
                 disabled={hasPosition || hasPendingOrder}
-                className="w-24 px-2 py-1 rounded-md border border-[var(--line)] bg-[var(--surface)] text-[var(--sea-ink)] tabular-nums text-xs text-right focus:outline-none focus:ring-1 focus:ring-[var(--lagoon)] disabled:opacity-40"
+                className="w-16 px-2 py-1.5 pr-5 rounded-md border border-[var(--line)] bg-[var(--surface)] text-[var(--sea-ink)] tabular-nums text-xs text-right focus:outline-none focus:ring-1 focus:ring-[#4fb8b2] disabled:opacity-40"
               />
-            </label>
-            <label className="flex items-center gap-1.5 text-xs text-[#4fb8b2]">
-              TP
-              <div className="relative">
-                <input
-                  type="number"
-                  min="0.1"
-                  max="100"
-                  step="0.1"
-                  value={+(tpPct * 100).toFixed(2)}
-                  onChange={(e) => setTpPct(parseFloat(e.target.value) / 100)}
-                  disabled={hasPosition || hasPendingOrder}
-                  className="w-16 px-2 py-1 pr-5 rounded-md border border-[var(--line)] bg-[var(--surface)] text-[var(--sea-ink)] tabular-nums text-xs text-right focus:outline-none focus:ring-1 focus:ring-[#4fb8b2] disabled:opacity-40"
-                />
-                <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[var(--sea-ink-soft)] text-xs pointer-events-none">%</span>
-              </div>
-            </label>
-            <label className="flex items-center gap-1.5 text-xs text-[#e05c5c]">
-              SL
-              <div className="relative">
-                <input
-                  type="number"
-                  min="0.1"
-                  max="100"
-                  step="0.1"
-                  value={+(slPct * 100).toFixed(2)}
-                  onChange={(e) => setSlPct(parseFloat(e.target.value) / 100)}
-                  disabled={hasPosition || hasPendingOrder}
-                  className="w-16 px-2 py-1 pr-5 rounded-md border border-[var(--line)] bg-[var(--surface)] text-[var(--sea-ink)] tabular-nums text-xs text-right focus:outline-none focus:ring-1 focus:ring-[#e05c5c] disabled:opacity-40"
-                />
-                <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[var(--sea-ink-soft)] text-xs pointer-events-none">%</span>
-              </div>
-            </label>
-            {hasPendingOrder ? (
-              <button
-                onClick={cancelLimitOrder}
-                className="px-5 py-2 rounded-lg text-sm font-medium bg-[var(--surface)] border border-yellow-500/40 text-yellow-500 hover:bg-yellow-500/10 transition-colors"
-              >
-                Cancel Order
-              </button>
-            ) : (
-              <button
-                onClick={placeLimitOrder}
-                disabled={usdt <= 0 || !klines.length || hasPosition}
-                className="px-5 py-2 rounded-lg text-sm font-medium bg-[#4fb8b2] text-white hover:bg-[var(--lagoon-deep)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              >
-                Buy BTC
-              </button>
-            )}
-            <div className="flex rounded-lg border border-[var(--line)] overflow-hidden">
-              {FORWARD_OPTIONS.map((opt) => (
-                <button
-                  key={opt.label}
-                  onClick={() => setForwardCandles(opt.candles)}
-                  className={cn(
-                    'px-2.5 py-2 text-xs font-medium transition-colors',
-                    forwardCandles === opt.candles
-                      ? 'bg-[var(--lagoon)] text-white'
-                      : 'bg-[var(--surface)] text-[var(--sea-ink-soft)] hover:bg-[var(--surface-strong)]',
-                  )}
-                >
-                  {opt.label}
-                </button>
-              ))}
+              <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[var(--sea-ink-soft)] text-xs pointer-events-none">%</span>
             </div>
+          </label>
+          <label className="flex items-center gap-1.5 text-xs text-[#e05c5c]">
+            SL
+            <div className="relative">
+              <input
+                type="number"
+                min="0.1"
+                max="100"
+                step="0.1"
+                value={+(slPct * 100).toFixed(2)}
+                onChange={(e) => setSlPct(parseFloat(e.target.value) / 100)}
+                disabled={hasPosition || hasPendingOrder}
+                className="w-16 px-2 py-1.5 pr-5 rounded-md border border-[var(--line)] bg-[var(--surface)] text-[var(--sea-ink)] tabular-nums text-xs text-right focus:outline-none focus:ring-1 focus:ring-[#e05c5c] disabled:opacity-40"
+              />
+              <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[var(--sea-ink-soft)] text-xs pointer-events-none">%</span>
+            </div>
+          </label>
+          {hasPendingOrder ? (
             <button
-              onClick={loadForward}
-              disabled={forwarding}
-              className="px-5 py-2 rounded-lg text-sm font-medium bg-[var(--surface)] border border-[var(--line)] text-[var(--sea-ink)] hover:bg-[var(--surface-strong)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              onClick={cancelLimitOrder}
+              className="px-4 py-1.5 rounded-lg text-sm font-medium bg-[var(--surface)] border border-yellow-500/40 text-yellow-500 hover:bg-yellow-500/10 transition-colors"
             >
-              {forwarding ? 'Loading…' : 'Forward →'}
+              Cancel
             </button>
+          ) : (
+            <button
+              onClick={placeLimitOrder}
+              disabled={usdt <= 0 || !klines.length || hasPosition}
+              className="px-4 py-1.5 rounded-lg text-sm font-medium bg-[#4fb8b2] text-white hover:bg-[var(--lagoon-deep)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              Buy BTC
+            </button>
+          )}
+          <div className="flex rounded-lg border border-[var(--line)] overflow-hidden">
+            {FORWARD_OPTIONS.map((opt) => (
+              <button
+                key={opt.label}
+                onClick={() => setForwardCandles(opt.candles)}
+                className={cn(
+                  'px-2.5 py-1.5 text-xs font-medium transition-colors',
+                  forwardCandles === opt.candles
+                    ? 'bg-[var(--lagoon)] text-white'
+                    : 'bg-[var(--surface)] text-[var(--sea-ink-soft)] hover:bg-[var(--surface-strong)]',
+                )}
+              >
+                {opt.label}
+              </button>
+            ))}
           </div>
+          <button
+            onClick={loadForward}
+            disabled={forwarding}
+            className="px-4 py-1.5 rounded-lg text-sm font-medium bg-[var(--surface)] border border-[var(--line)] text-[var(--sea-ink)] hover:bg-[var(--surface-strong)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {forwarding ? 'Loading…' : 'Forward →'}
+          </button>
         </div>
-        {(lastBuyPrice !== null || lastSellPrice !== null) && (
-          <div className={cn(
-            'flex items-center gap-4 px-4 py-1.5 border-t border-[var(--line)] text-xs',
-            lastSellPrice !== null && lastBuyPrice !== null
-              ? lastSellPrice - lastBuyPrice > 0 ? 'text-green-500' : 'text-red-500'
-              : 'text-[var(--sea-ink-soft)]',
-          )}>
-            {lastBuyPrice !== null && (
-              <span>
-                Bought <span className="tabular-nums font-medium text-[var(--sea-ink)]">{fmt2(lastBuyPrice)}</span>
-              </span>
-            )}
-            {lastBuyPrice !== null && lastSellPrice !== null && (
-              <span className="text-[var(--line)]">|</span>
-            )}
-            {lastSellPrice !== null && (
-              <span>
-                Sold <span className="tabular-nums font-medium text-[var(--sea-ink)]">{fmt2(lastSellPrice)}</span>
-              </span>
-            )}
-          </div>
-        )}
+
       </div>
     </div>
   )
