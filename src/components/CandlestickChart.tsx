@@ -66,6 +66,18 @@ export function CandlestickChart({ klines }: { klines: Kline[] }) {
         timeVisible: true,
         secondsVisible: false,
       },
+      localization: {
+        timeFormatter: (ts: number) =>
+          new Date(ts * 1000).toLocaleString('en-US', {
+            weekday: 'short',
+            day: '2-digit',
+            month: 'short',
+            year: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+          }),
+      },
       width: containerRef.current.clientWidth,
       height: containerRef.current.clientHeight,
     })
