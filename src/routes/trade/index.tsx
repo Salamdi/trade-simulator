@@ -1,5 +1,12 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
+import { useEffect, useRef } from 'react'
+import {
+  createChart,
+  CandlestickSeries,
+  ColorType,
+  type Time,
+} from 'lightweight-charts'
 
 export const Route = createFileRoute('/trade/')({
   component: RouteComponent,
@@ -15,23 +22,73 @@ async function fetchKlines(): Promise<Kline[]> {
   return res.json()
 }
 
-function formatDate(ts: number) {
-  const d = new Date(ts)
-  return d.toLocaleDateString('en-US', {
-    month: 'short',
-    day: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  })
-}
+function CandlestickChart({ klines }: { klines: Kline[] }) {
+  const containerRef = useRef<HTMLDivElement>(null)
 
-function formatNum(s: string) {
-  return parseFloat(s).toLocaleString('en-US', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })
+  useEffect(() => {
+    if (!containerRef.current) return
+
+    const chart = createChart(containerRef.current, {
+      layout: {
+        background: { type: ColorType.Solid, color: '#0a1418' },
+        textColor: '#afcdc8',
+      },
+      grid: {
+        vertLines: { color: 'rgba(141,229,219,0.06)' },
+        horzLines: { color: 'rgba(141,229,219,0.06)' },
+      },
+      crosshair: {
+        vertLine: { color: 'rgba(96,215,207,0.4)' },
+        horzLine: { color: 'rgba(96,215,207,0.4)' },
+      },
+      rightPriceScale: { borderColor: 'rgba(141,229,219,0.12)' },
+      timeScale: {
+        borderColor: 'rgba(141,229,219,0.12)',
+        timeVisible: true,
+        secondsVisible: false,
+      },
+      width: containerRef.current.clientWidth,
+      height: containerRef.current.clientHeight,
+    })
+
+    const series = chart.addSeries(CandlestickSeries, {
+      upColor: '#4fb8b2',
+      downColor: '#e05c5c',
+      borderUpColor: '#4fb8b2',
+      borderDownColor: '#e05c5c',
+      wickUpColor: '#4fb8b2',
+      wickDownColor: '#e05c5c',
+    })
+
+    series.setData(
+      klines.map(([ts, open, high, low, close]) => ({
+        time: (ts / 1000) as Time,
+        open: parseFloat(open),
+        high: parseFloat(high),
+        low: parseFloat(low),
+        close: parseFloat(close),
+      })),
+    )
+
+    chart.timeScale().fitContent()
+
+    const observer = new ResizeObserver(() => {
+      if (containerRef.current) {
+        chart.resize(
+          containerRef.current.clientWidth,
+          containerRef.current.clientHeight,
+        )
+      }
+    })
+    observer.observe(containerRef.current)
+
+    return () => {
+      observer.disconnect()
+      chart.remove()
+    }
+  }, [klines])
+
+  return <div ref={containerRef} className="w-full h-full" />
 }
 
 function RouteComponent() {
@@ -47,7 +104,7 @@ function RouteComponent() {
 
   if (isPending) {
     return (
-      <div className="flex items-center justify-center h-64 text-[var(--sea-ink-soft)] text-sm">
+      <div className="flex items-center justify-center h-screen text-[var(--sea-ink-soft)] text-sm">
         Loading…
       </div>
     )
@@ -55,66 +112,15 @@ function RouteComponent() {
 
   if (isError) {
     return (
-      <div className="flex items-center justify-center h-64 text-red-500 text-sm">
+      <div className="flex items-center justify-center h-screen text-red-500 text-sm">
         {error.message}
       </div>
     )
   }
 
   return (
-    <div className="p-6">
-      <h1 className="text-xl font-semibold text-[var(--sea-ink)] mb-4">
-        BTC/USDT — 15m
-      </h1>
-      <div className="overflow-auto rounded-xl border border-[var(--line)] island-shell">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-[var(--line)] text-[var(--sea-ink-soft)] text-left">
-              {['Date & Time', 'Open', 'High', 'Low', 'Close', 'Volume'].map(
-                (col) => (
-                  <th
-                    key={col}
-                    className="px-4 py-3 font-medium whitespace-nowrap"
-                  >
-                    {col}
-                  </th>
-                ),
-              )}
-            </tr>
-          </thead>
-          <tbody>
-            {data.map((kline) => {
-              const [ts, open, high, low, close, volume] = kline
-              const isUp = parseFloat(close) >= parseFloat(open)
-              return (
-                <tr
-                  key={ts}
-                  className="border-b border-[var(--line)] last:border-0 hover:bg-[var(--surface)] transition-colors"
-                >
-                  <td className="px-4 py-2 text-[var(--sea-ink-soft)] whitespace-nowrap">
-                    {formatDate(ts)}
-                  </td>
-                  <td className="px-4 py-2 tabular-nums">{formatNum(open)}</td>
-                  <td className="px-4 py-2 tabular-nums text-[var(--palm)]">
-                    {formatNum(high)}
-                  </td>
-                  <td className="px-4 py-2 tabular-nums text-red-500">
-                    {formatNum(low)}
-                  </td>
-                  <td
-                    className={`px-4 py-2 tabular-nums font-medium ${isUp ? 'text-[var(--palm)]' : 'text-red-500'}`}
-                  >
-                    {formatNum(close)}
-                  </td>
-                  <td className="px-4 py-2 tabular-nums text-[var(--sea-ink-soft)]">
-                    {formatNum(volume)}
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      </div>
+    <div className="w-full h-screen">
+      <CandlestickChart klines={data} />
     </div>
   )
 }
