@@ -27,7 +27,15 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
         content: 'width=device-width, initial-scale=1',
       },
       {
-        title: 'Trade simulator',
+        title: 'BTC Trade Simulator',
+      },
+      {
+        name: 'description',
+        content: 'Historical BTC/USDT trading simulator. Step forward through real Binance candlestick data, place market or limit orders, and watch take-profit and stop-loss levels execute automatically — without risking real money.',
+      },
+      {
+        name: 'keywords',
+        content: 'bitcoin, BTC, trading simulator, backtesting, candlestick chart, take profit, stop loss, limit order, Binance, historical data',
       },
     ],
     links: [
