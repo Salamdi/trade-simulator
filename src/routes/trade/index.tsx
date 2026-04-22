@@ -13,12 +13,21 @@ const TP_PCT = 0.01
 const SL_PCT = 0.02
 const FEE = 0.001
 
-async function fetchKlines(startTime?: number): Promise<Kline[]> {
+const FORWARD_OPTIONS = [
+  { label: '15m', candles: 1 },
+  { label: '1h',  candles: 4 },
+  { label: '3h',  candles: 12 },
+  { label: '6h',  candles: 24 },
+  { label: '12h', candles: 48 },
+  { label: '24h', candles: 96 },
+]
+
+async function fetchKlines(startTime?: number, limit = 12): Promise<Kline[]> {
   const params = new URLSearchParams({
     symbol: 'BTCUSDT',
     interval: '15m',
     ...(startTime
-      ? { startTime: String(startTime), limit: '12' }
+      ? { startTime: String(startTime), limit: String(limit) }
       : { endTime: '1640995200000', limit: '1000' }),
   })
   const res = await fetch(`/api/v3/uiKlines?${params}`)
@@ -39,6 +48,7 @@ function RouteComponent() {
   const [stopLoss, setStopLoss] = useState<number | null>(null)
   const [lastBuyPrice, setLastBuyPrice] = useState<number | null>(null)
   const [lastSellPrice, setLastSellPrice] = useState<number | null>(null)
+  const [forwardCandles, setForwardCandles] = useState(12)
 
   // Refs so the async loadForward always reads latest values
   const btcRef = useRef(btc)
@@ -79,7 +89,7 @@ function RouteComponent() {
     const lastTs = klines[klines.length - 1][0]
     setForwarding(true)
     try {
-      const next = await fetchKlines(lastTs + INTERVAL_MS)
+      const next = await fetchKlines(lastTs + INTERVAL_MS, forwardCandles)
       if (!next.length) return
 
       const tp = tpRef.current
@@ -178,12 +188,28 @@ function RouteComponent() {
           >
             Buy BTC
           </button>
+          <div className="flex rounded-lg border border-[var(--line)] overflow-hidden">
+            {FORWARD_OPTIONS.map((opt) => (
+              <button
+                key={opt.label}
+                onClick={() => setForwardCandles(opt.candles)}
+                className={cn(
+                  'px-2.5 py-2 text-xs font-medium transition-colors',
+                  forwardCandles === opt.candles
+                    ? 'bg-[var(--lagoon)] text-white'
+                    : 'bg-[var(--surface)] text-[var(--sea-ink-soft)] hover:bg-[var(--surface-strong)]',
+                )}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
           <button
             onClick={loadForward}
             disabled={forwarding}
             className="px-5 py-2 rounded-lg text-sm font-medium bg-[var(--surface)] border border-[var(--line)] text-[var(--sea-ink)] hover:bg-[var(--surface-strong)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {forwarding ? 'Loading…' : 'Forward 3h →'}
+            {forwarding ? 'Loading…' : 'Forward →'}
           </button>
         </div>
         </div>
