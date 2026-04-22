@@ -36,6 +36,8 @@ function RouteComponent() {
   const [btc, setBtc] = useState(0)
   const [takeProfit, setTakeProfit] = useState<number | null>(null)
   const [stopLoss, setStopLoss] = useState<number | null>(null)
+  const [lastBuyPrice, setLastBuyPrice] = useState<number | null>(null)
+  const [lastSellPrice, setLastSellPrice] = useState<number | null>(null)
 
   // Refs so the async loadForward always reads latest values
   const btcRef = useRef(btc)
@@ -65,6 +67,8 @@ function RouteComponent() {
     const acquired = (usdt * (1 - FEE)) / price
     setBtc(acquired)
     setUsdt(0)
+    setLastBuyPrice(price)
+    setLastSellPrice(null)
     setTakeProfit(price * (1 + TP_PCT))
     setStopLoss(price * (1 - SL_PCT))
   }
@@ -89,6 +93,7 @@ function RouteComponent() {
           if (low <= sl) {
             setUsdt(currentBtc * sl * (1 - FEE))
             setBtc(0)
+            setLastSellPrice(sl)
             setTakeProfit(null)
             setStopLoss(null)
             break
@@ -96,6 +101,7 @@ function RouteComponent() {
           if (high >= tp) {
             setUsdt(currentBtc * tp * (1 - FEE))
             setBtc(0)
+            setLastSellPrice(tp)
             setTakeProfit(null)
             setStopLoss(null)
             break
@@ -130,7 +136,8 @@ function RouteComponent() {
       <div className="flex-1 min-h-0">
         <CandlestickChart klines={klines} />
       </div>
-      <div className="shrink-0 flex items-center justify-between px-4 py-3 border-t border-[var(--line)] bg-[var(--header-bg)] backdrop-blur-sm">
+      <div className="shrink-0 border-t border-[var(--line)] bg-[var(--header-bg)] backdrop-blur-sm">
+        <div className="flex items-center justify-between px-4 py-3">
         <div className="flex items-center gap-4 text-sm">
           <span className="text-[var(--sea-ink-soft)]">
             USDT{' '}
@@ -178,6 +185,24 @@ function RouteComponent() {
             {forwarding ? 'Loading…' : 'Forward 3h →'}
           </button>
         </div>
+        </div>
+        {(lastBuyPrice !== null || lastSellPrice !== null) && (
+          <div className="flex items-center gap-4 px-4 py-1.5 border-b border-[var(--line)] text-xs text-[var(--sea-ink-soft)]">
+            {lastBuyPrice !== null && (
+              <span>
+                Bought <span className="tabular-nums font-medium text-[var(--sea-ink)]">{fmt2(lastBuyPrice)}</span>
+              </span>
+            )}
+            {lastBuyPrice !== null && lastSellPrice !== null && (
+              <span className="text-[var(--line)]">|</span>
+            )}
+            {lastSellPrice !== null && (
+              <span>
+                Sold <span className="tabular-nums font-medium text-[var(--sea-ink)]">{fmt2(lastSellPrice)}</span>
+              </span>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )
