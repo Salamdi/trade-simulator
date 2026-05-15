@@ -261,6 +261,7 @@ function RouteComponent() {
               step="1"
               value={buyPrice ?? ''}
               onChange={(e) => setBuyPrice(parseFloat(e.target.value))}
+              onFocus={(e) => e.target.select()}
               disabled={hasPosition || hasPendingOrder}
               className="w-28 px-2 py-1.5 rounded-md border border-[var(--line)] bg-[var(--surface)] text-[var(--sea-ink)] tabular-nums text-base text-right focus:outline-none focus:ring-1 focus:ring-[var(--lagoon)] disabled:opacity-40"
             />
@@ -275,6 +276,7 @@ function RouteComponent() {
                 step="0.1"
                 value={+(tpPct * 100).toFixed(2)}
                 onChange={(e) => setTpPct(parseFloat(e.target.value) / 100)}
+                onFocus={(e) => e.target.select()}
                 disabled={hasPosition || hasPendingOrder}
                 className="w-20 px-2 py-1.5 pr-5 rounded-md border border-[var(--line)] bg-[var(--surface)] text-[var(--sea-ink)] tabular-nums text-base text-right focus:outline-none focus:ring-1 focus:ring-[#4fb8b2] disabled:opacity-40"
               />
@@ -291,6 +293,7 @@ function RouteComponent() {
                 step="0.1"
                 value={+(slPct * 100).toFixed(2)}
                 onChange={(e) => setSlPct(parseFloat(e.target.value) / 100)}
+                onFocus={(e) => e.target.select()}
                 disabled={hasPosition || hasPendingOrder}
                 className="w-20 px-2 py-1.5 pr-5 rounded-md border border-[var(--line)] bg-[var(--surface)] text-[var(--sea-ink)] tabular-nums text-base text-right focus:outline-none focus:ring-1 focus:ring-[#e05c5c] disabled:opacity-40"
               />
