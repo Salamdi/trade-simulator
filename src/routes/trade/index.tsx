@@ -262,7 +262,7 @@ function RouteComponent() {
               value={buyPrice ?? ''}
               onChange={(e) => setBuyPrice(parseFloat(e.target.value))}
               disabled={hasPosition || hasPendingOrder}
-              className="w-24 px-2 py-1.5 rounded-md border border-[var(--line)] bg-[var(--surface)] text-[var(--sea-ink)] tabular-nums text-xs text-right focus:outline-none focus:ring-1 focus:ring-[var(--lagoon)] disabled:opacity-40"
+              className="w-28 px-2 py-1.5 rounded-md border border-[var(--line)] bg-[var(--surface)] text-[var(--sea-ink)] tabular-nums text-base text-right focus:outline-none focus:ring-1 focus:ring-[var(--lagoon)] disabled:opacity-40"
             />
           </label>
           <label className="flex items-center gap-1.5 text-xs text-[#4fb8b2]">
@@ -276,7 +276,7 @@ function RouteComponent() {
                 value={+(tpPct * 100).toFixed(2)}
                 onChange={(e) => setTpPct(parseFloat(e.target.value) / 100)}
                 disabled={hasPosition || hasPendingOrder}
-                className="w-16 px-2 py-1.5 pr-5 rounded-md border border-[var(--line)] bg-[var(--surface)] text-[var(--sea-ink)] tabular-nums text-xs text-right focus:outline-none focus:ring-1 focus:ring-[#4fb8b2] disabled:opacity-40"
+                className="w-20 px-2 py-1.5 pr-5 rounded-md border border-[var(--line)] bg-[var(--surface)] text-[var(--sea-ink)] tabular-nums text-base text-right focus:outline-none focus:ring-1 focus:ring-[#4fb8b2] disabled:opacity-40"
               />
               <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[var(--sea-ink-soft)] text-xs pointer-events-none">%</span>
             </div>
@@ -292,7 +292,7 @@ function RouteComponent() {
                 value={+(slPct * 100).toFixed(2)}
                 onChange={(e) => setSlPct(parseFloat(e.target.value) / 100)}
                 disabled={hasPosition || hasPendingOrder}
-                className="w-16 px-2 py-1.5 pr-5 rounded-md border border-[var(--line)] bg-[var(--surface)] text-[var(--sea-ink)] tabular-nums text-xs text-right focus:outline-none focus:ring-1 focus:ring-[#e05c5c] disabled:opacity-40"
+                className="w-20 px-2 py-1.5 pr-5 rounded-md border border-[var(--line)] bg-[var(--surface)] text-[var(--sea-ink)] tabular-nums text-base text-right focus:outline-none focus:ring-1 focus:ring-[#e05c5c] disabled:opacity-40"
               />
               <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[var(--sea-ink-soft)] text-xs pointer-events-none">%</span>
             </div>
