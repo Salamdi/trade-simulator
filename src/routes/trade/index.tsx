@@ -257,6 +257,7 @@ function RouteComponent() {
             Price
             <input
               type="number"
+              inputMode="decimal"
               min="0"
               step="1"
               value={buyPrice ?? ''}
@@ -271,6 +272,7 @@ function RouteComponent() {
             <div className="relative">
               <input
                 type="number"
+                inputMode="decimal"
                 min="0.1"
                 max="100"
                 step="0.1"
@@ -288,6 +290,7 @@ function RouteComponent() {
             <div className="relative">
               <input
                 type="number"
+                inputMode="decimal"
                 min="0.1"
                 max="100"
                 step="0.1"
