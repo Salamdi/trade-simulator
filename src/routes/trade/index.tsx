@@ -7,7 +7,7 @@ export const Route = createFileRoute('/trade/')({
 function RouteComponent() {
   return (
     <div className="flex items-center justify-center h-screen px-4 text-center text-[var(--sea-ink-soft)] text-sm">
-      The page is under maintenance works. Coming back online soon.
+      This page is currently undergoing maintenance. Please check back soon.
     </div>
   )
 }
