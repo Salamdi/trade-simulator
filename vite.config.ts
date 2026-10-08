@@ -9,14 +9,6 @@ import { cloudflare } from '@cloudflare/vite-plugin'
 
 const config = defineConfig({
   resolve: { tsconfigPaths: true },
-  server: {
-    proxy: {
-      '/api/v3': {
-        target: 'https://www.binance.com',
-        changeOrigin: true,
-      },
-    },
-  },
   plugins: [
     devtools(),
     cloudflare({ viteEnvironment: { name: 'ssr' } }),
