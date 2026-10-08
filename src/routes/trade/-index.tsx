@@ -16,9 +16,9 @@ const FEE = 0.001
 
 const FORWARD_OPTIONS = [
   { label: '15m', candles: 1 },
-  { label: '1h', candles: 4 },
-  { label: '3h', candles: 12 },
-  { label: '6h', candles: 24 },
+  { label: '1h',  candles: 4 },
+  { label: '3h',  candles: 12 },
+  { label: '6h',  candles: 24 },
   { label: '12h', candles: 48 },
   { label: '24h', candles: 96 },
 ]
@@ -30,10 +30,7 @@ function fetchKlines(startTime?: number, limit = 12) {
 }
 
 function fmt2(n: number) {
-  return n.toLocaleString('en-US', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })
+  return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
 function RouteComponent() {
@@ -196,32 +193,23 @@ function RouteComponent() {
         <CandlestickChart klines={klines} />
       </div>
       <div className="shrink-0 border-t border-[var(--line)] bg-[var(--header-bg)] backdrop-blur-sm">
+
         {/* Balance + order info */}
         <div className="flex items-center gap-3 flex-wrap px-4 pt-2.5 pb-1.5 text-xs">
           <span className="text-[var(--sea-ink-soft)]">
-            USDT{' '}
-            <span className="font-medium text-[var(--sea-ink)] tabular-nums">
-              {fmt2(usdt)}
-            </span>
+            USDT <span className="font-medium text-[var(--sea-ink)] tabular-nums">{fmt2(usdt)}</span>
           </span>
           <span className="text-[var(--line)]">|</span>
           <span className="text-[var(--sea-ink-soft)]">
-            BTC{' '}
-            <span className="font-medium text-[var(--sea-ink)] tabular-nums">
-              {btc.toLocaleString('en-US', {
-                minimumFractionDigits: 6,
-                maximumFractionDigits: 6,
-              })}
+            BTC <span className="font-medium text-[var(--sea-ink)] tabular-nums">
+              {btc.toLocaleString('en-US', { minimumFractionDigits: 6, maximumFractionDigits: 6 })}
             </span>
           </span>
           {hasPendingOrder && (
             <>
               <span className="text-[var(--line)]">|</span>
               <span className="text-yellow-500">
-                Limit{' '}
-                <span className="tabular-nums font-medium">
-                  {fmt2(pendingLimit!)}
-                </span>
+                Limit <span className="tabular-nums font-medium">{fmt2(pendingLimit!)}</span>
               </span>
             </>
           )}
@@ -229,10 +217,7 @@ function RouteComponent() {
             <>
               <span className="text-[var(--line)]">|</span>
               <span className="text-[#4fb8b2]">
-                TP{' '}
-                <span className="tabular-nums font-medium">
-                  {fmt2(takeProfit)}
-                </span>
+                TP <span className="tabular-nums font-medium">{fmt2(takeProfit)}</span>
               </span>
             </>
           )}
@@ -240,43 +225,24 @@ function RouteComponent() {
             <>
               <span className="text-[var(--line)]">|</span>
               <span className="text-[#e05c5c]">
-                SL{' '}
-                <span className="tabular-nums font-medium">
-                  {fmt2(stopLoss)}
-                </span>
+                SL <span className="tabular-nums font-medium">{fmt2(stopLoss)}</span>
               </span>
             </>
           )}
           {(lastBuyPrice !== null || lastSellPrice !== null) && (
             <>
               <span className="text-[var(--line)]">|</span>
-              <span
-                className={cn(
-                  lastSellPrice !== null && lastBuyPrice !== null
-                    ? lastSellPrice - lastBuyPrice > 0
-                      ? 'text-green-500'
-                      : 'text-red-500'
-                    : 'text-[var(--sea-ink-soft)]',
-                )}
-              >
+              <span className={cn(
+                lastSellPrice !== null && lastBuyPrice !== null
+                  ? lastSellPrice - lastBuyPrice > 0 ? 'text-green-500' : 'text-red-500'
+                  : 'text-[var(--sea-ink-soft)]',
+              )}>
                 {lastBuyPrice !== null && (
-                  <>
-                    Bought{' '}
-                    <span className="tabular-nums font-medium text-[var(--sea-ink)]">
-                      {fmt2(lastBuyPrice)}
-                    </span>
-                  </>
+                  <>Bought <span className="tabular-nums font-medium text-[var(--sea-ink)]">{fmt2(lastBuyPrice)}</span></>
                 )}
-                {lastBuyPrice !== null && lastSellPrice !== null && (
-                  <span className="mx-1.5 text-[var(--line)]">|</span>
-                )}
+                {lastBuyPrice !== null && lastSellPrice !== null && <span className="mx-1.5 text-[var(--line)]">|</span>}
                 {lastSellPrice !== null && (
-                  <>
-                    Sold{' '}
-                    <span className="tabular-nums font-medium text-[var(--sea-ink)]">
-                      {fmt2(lastSellPrice)}
-                    </span>
-                  </>
+                  <>Sold <span className="tabular-nums font-medium text-[var(--sea-ink)]">{fmt2(lastSellPrice)}</span></>
                 )}
               </span>
             </>
@@ -314,9 +280,7 @@ function RouteComponent() {
                 disabled={hasPosition || hasPendingOrder}
                 className="w-20 px-2 py-1.5 pr-5 rounded-md border border-[var(--line)] bg-[var(--surface)] text-[var(--sea-ink)] tabular-nums text-base text-right focus:outline-none focus:ring-1 focus:ring-[#4fb8b2] disabled:opacity-40"
               />
-              <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[var(--sea-ink-soft)] text-xs pointer-events-none">
-                %
-              </span>
+              <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[var(--sea-ink-soft)] text-xs pointer-events-none">%</span>
             </div>
           </label>
           <label className="flex items-center gap-1.5 text-xs text-[#e05c5c]">
@@ -334,9 +298,7 @@ function RouteComponent() {
                 disabled={hasPosition || hasPendingOrder}
                 className="w-20 px-2 py-1.5 pr-5 rounded-md border border-[var(--line)] bg-[var(--surface)] text-[var(--sea-ink)] tabular-nums text-base text-right focus:outline-none focus:ring-1 focus:ring-[#e05c5c] disabled:opacity-40"
               />
-              <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[var(--sea-ink-soft)] text-xs pointer-events-none">
-                %
-              </span>
+              <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[var(--sea-ink-soft)] text-xs pointer-events-none">%</span>
             </div>
           </label>
           {hasPendingOrder ? (
@@ -379,6 +341,7 @@ function RouteComponent() {
             {forwarding ? 'Loading…' : 'Forward →'}
           </button>
         </div>
+
       </div>
     </div>
   )
